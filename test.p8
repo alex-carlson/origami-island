@@ -3,6 +3,7 @@ version 16
 __lua__
 
 x = 64  y = 64
+dialogueIndex = 0
 
 function _update()
  if (btn(0)) then x=x-1 end
@@ -11,7 +12,12 @@ function _update()
  if (btn(3)) then y=y+1 end
 end
 
+fuunction _update()
+    if(btn(5)) then
+        dialogueIndex += 1
+    end
+end
+
 function _draw()
- rectfill(0,0,127,127,5)
- circfill(x,y,7,14)
+ rectfill(0,0,127,127,0)
 end
