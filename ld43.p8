@@ -62,8 +62,8 @@ function p:move()
  right=btn(1)
  up=btn(2)
  down=btn(3)
- use=btn(4)
- cancel=btn(5)
+ use=btnp(4)
+ cancel=btnp(5)
   
  if (left) self.x -= self.speed
  if (right) self.x += self.speed
@@ -75,7 +75,7 @@ function p:move()
 end
 
 function checkitem()
- if(hoveritem == "66") then dtb_disp(hoveritem, function()
+ if(hoveritem == 66) then dtb_disp(hoveritem, function()
   sfx(1)
   actors.remove(hoveritem)
  end) end
