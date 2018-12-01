@@ -8,10 +8,14 @@ __lua__
 function dtb_init(n) dtb_q={}dtb_f={}dtb_n=3 if n then dtb_n=n end _dtb_c() end function dtb_disp(t,c)local s,l,w,h,u s={}l=""w=""h=""u=function()if #w+#l>29 then add(s,l)l=""end l=l..w w=""end for i=1,#t do h=sub(t,i,i)w=w..h if h==" "then u()elseif #w>28 then w=w.."-"u()end end u()if l~=""then add(s,l)end add(dtb_q,s)if c==nil then c=0 end add(dtb_f,c)end function _dtb_c()dtb_d={}for i=1,dtb_n do add(dtb_d,"")end dtb_c=0 dtb_l=0 end function _dtb_l()dtb_c+=1 for i=1,#dtb_d-1 do dtb_d[i]=dtb_d[i+1]end dtb_d[#dtb_d]=""sfx(2)end function dtb_update()if #dtb_q>0 then if dtb_c==0 then dtb_c=1 end local z,x,q,c z=#dtb_d x=dtb_q[1]q=#dtb_d[z]c=q>=#x[dtb_c]if c and dtb_c>=#x then if btnp(4) then if dtb_f[1]~=0 then dtb_f[1]()end del(dtb_f,dtb_f[1])del(dtb_q,dtb_q[1])_dtb_c()sfx(2)return end elseif dtb_c>0 then dtb_l-=1 if not c then if dtb_l<=0 then local v,h v=q+1 h=sub(x[dtb_c],v,v)dtb_l=1 if h~=" " then sfx(0)end if h=="." then dtb_l=6 end dtb_d[z]=dtb_d[z]..h end if btnp(4) then dtb_d[z]=x[dtb_c]end else if btnp(4) then _dtb_l()end end end end end function dtb_draw()if #dtb_q>0 then local z,o z=#dtb_d o=0 if dtb_c<z then o=z-dtb_c end rectfill(cam.x+2, cam.y+125-z*8,cam.x+125,cam.y+125,7)if dtb_c>0 and #dtb_d[#dtb_d]==#dtb_q[1][dtb_c] then print("\x8e",cam.x+118,cam.y+120,1)end for i=1,z do print(dtb_d[i], cam.x+4, cam.y+i*8+119-(z+o)*8,1)end end end
 
 actor = {} --all actors in world
+max_actors = 128
+time = 600
+
+hoveritem = ""
 
 p={
- x=64,
- y=64,
+ x=12,
+ y=12,
  w=1,
  h=1,
  speed=1,
@@ -21,25 +25,32 @@ p={
 }
 
 cam = {
- x=0,
- y=0,
- speed=2,
+ x=-40,
+ y=-40,
+ speed=1,
 }
 
-function make_actor(x,y,spr)
- a={}
- a.x=x
- a.y=y
- a.spr=spr
-
- add(actor,a)
+function make_actor(k,x,y,d)
+	local a = {}
+	a.kind = k
+	a.life = 1
+	a.x=x a.y=y a.dx=0 a.dy=0
+ a.d=d
+ a.frame = 1  a.f0 = 0
+ a.t=0
+ if (count(actor) < max_actors) then
+  add(actor, a)
+ end
+	return a
 end
 
 function _init()
  dtb_init(numlines)
- duck = make_actor(11,11,66)
- turt = make_actor(19,10,67)
- fish = make_actor(18,1,68)
+ dtb_disp("hi, im otto")
+ dtb_disp("i lost my origami homework")
+ dtb_disp("big gust of wind came and blew it away")
+ dtb_disp("ive got to find it before class starts")
+ dtb_disp("ive got until 9am to collect them!")
 end
 
 function p:move()
@@ -58,29 +69,20 @@ function p:move()
  if (right) self.x += self.speed
  if (up) self.y -= self.speed
  if (down) self.y += self.speed
- if (use) checkitem(self)
+ if (use) checkitem()
 
  if(cmap(p)) self.x=lx self.y=ly
 end
 
-function p:anim()
-    
-end
-
-function checkitem(o)
- s = mget(o.x/8,o.y/8)
-
- if(fget(s,0)) dtb_disp("pickup")
-
- -- if(s == 130) dtb_disp("its a tree")
- -- if(s == 88) dtb_disp("sand")
- -- if(s == 107) dtb_disp("i am wet")
-
- foreach(actor, checkactors)
+function checkitem()
+ if(hoveritem == "66") then dtb_disp(hoveritem, function()
+  sfx(1)
+  actors.remove(hoveritem)
+ end) end
 end
 
 function checkactors(a)
- if(p.x/8 == a.x and p.y/8 == a.y) dtb_disp(tostr(a.spr))
+ if(p.x == a.x and p.y == a.y) dtb_disp(tostr(a.spr))
 end
 
 function p:update()
@@ -88,14 +90,41 @@ function p:update()
 end
 
 function p:draw()
- foreach(actor,draw_actor)
  spr(self.sprite,self.x,self.y,self.w,self.h)
 end
 
-function draw_actor(a)
- local sx = (a.x * 8) - 4
- local sy = (a.y * 8) - 4
- spr(a.spr, sx, sy)
+function draw_actor(pl)
+
+ if (pl.pal ~= nil) then
+  for i=1,15 do
+--   pal(i, pl.pal[i])
+  end
+ end
+
+ if (pl.charge ~= nil and 
+     pl.charge > 0) then
+ 
+  for i=2,15 do
+   pal(i,7+((pl.t/2) % 8))
+  end
+--  pal(2,7)
+
+ end
+
+ if (pl.super ~= nil and 
+     pl.super > 0) then
+ 
+  for i=2,15 do
+   pal(i,6+((pl.t/2) % 2))
+  end
+
+ end
+
+	spr(pl.frame, 
+  pl.x*8-4, pl.y*8-8, 
+  1, 1)
+  
+ pal()
 end
 
 function cam:update()
@@ -121,9 +150,15 @@ function cam:update()
  camera(cam.x, cam.y)
 end
 
+function getitem()
+ hoveritem = tostr(mget(p.x/8,p.y/8))
+end
+
 function _update()
  p:update()
+ move_spawns(p.x, p.y)
  dtb_update()
+ getitem()
 end
 
 function _draw()
@@ -131,7 +166,55 @@ function _draw()
  map(0,0,0,0)
  cam:update()
  p:draw()
+ foreach(actor,draw_actor)
  dtb_draw()
+end
+
+function move_spawns(x0, y0)
+
+ -- spawn stuff close to x0,y0
+
+ for y=0,32 do
+  for x=x0-10,x0+10 do
+   val = mget(x,y)
+   m = nil
+
+   -- pickup
+   if (fget(val, 0)) then    
+    m = make_actor(66,x+0.5,y+1,1)
+    m.f0 = val
+    m.frame = val
+   end
+
+   -- monster
+   if (fget(val, 3)) then
+    m = make_actor(3,x+0.5,y+1,-1)
+    m.f0=val
+    m.frame=val
+   end
+   
+   -- clear cel if spawned something
+   if (m ~= nil) then
+    clear_cel(x,y)
+   end
+  end
+ end
+
+end
+
+-- clear_cel using neighbour val
+-- prefer empty, then non-ground
+-- then left neighbour
+function clear_cel(x, y)
+ val0 = mget(x-1,y)
+ val1 = mget(x+1,y)
+ if (val0 == 0 or val1 == 0) then
+  mset(x,y,0)
+ elseif (not fget(val1,1)) then
+  mset(x,y,val1)
+ else
+  mset(x,y,val0)
+ end
 end
 
 function cmap(o)
@@ -144,10 +227,10 @@ function cmap(o)
   local y1=o.y/8
   local x2=(o.x+7)/8
   local y2=(o.y+7)/8
-  local a=fget(mget(x1,y1),0)
-  local b=fget(mget(x1,y2),0)
+  local a=fget(mget(x1,y1),7)
+  local b=fget(mget(x1,y2),7)
   local c=fget(mget(x2,y2),7)
-  local d=fget(mget(x2,y1),0)
+  local d=fget(mget(x2,y1),7)
   ct=a or b or c or d
  end
 
@@ -284,7 +367,7 @@ b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6
 b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6
 b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6
 __gff__
-0101000000000000000000000000000001010000000000000000000000000000010101010000000000000000000000000101010100000000000000000000000000000000000000000000000000000000000000000000000000000000008080800000000000000000000000800000000000000000000000000000000000800000
+0000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000101010000000000000000000000000000000000000000000000008080800000000000000000000000800000000000000000000000000000000000800000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
@@ -295,10 +378,10 @@ __map__
 6b78585858585858585858588258585858585858585858796b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b5c5858585858585858585858585858585858795a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b5858825858585858585858588258585a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
-6b6b6b6b6b7858585858588258585858585858587a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
+6b6b6b6b6b7858585858588258585843585858587a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b5c58585858585858585858585858696b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b6b58585858585858585858585858796b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
-6b6b6b6b6b6b6b785858585858588258585858585a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
+6b6b6b6b6b6b6b445858425858588258585858585a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b6b5c7858585858585858585858796b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b6b6b6b5c7858585858585858795a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b6b6b6b6b6b6b6b5c7858795a6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
@@ -319,3 +402,5 @@ __map__
 6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
 6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b6b
+__sfx__
+00010000047500b75003750047500c7500775009750087500c7500e7501375009750337503a7503c75015750377500e75030750077500b750027501c750207501a7501f7501e7502175023750257502475018750
